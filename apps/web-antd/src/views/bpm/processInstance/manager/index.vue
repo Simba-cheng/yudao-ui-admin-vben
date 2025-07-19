@@ -33,7 +33,7 @@ function onTaskClick(task: BpmProcessInstanceApi.Task) {
 }
 
 /** 查看流程实例 */
-function handleDetail(row: BpmProcessInstanceApi.ProcessInstanceVO) {
+function handleDetail(row: BpmProcessInstanceApi.ProcessInstance) {
   console.warn(row);
   router.push({
     name: 'BpmProcessInstanceDetail',
@@ -42,7 +42,7 @@ function handleDetail(row: BpmProcessInstanceApi.ProcessInstanceVO) {
 }
 
 /** 取消流程实例 */
-function handleCancel(row: BpmProcessInstanceApi.ProcessInstanceVO) {
+function handleCancel(row: BpmProcessInstanceApi.ProcessInstance) {
   prompt({
     async beforeClose(scope) {
       if (scope.isConfirm) {
@@ -99,10 +99,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<BpmProcessInstanceApi.ProcessInstanceVO>,
+  } as VxeTableGridOptions<BpmProcessInstanceApi.ProcessInstance>,
 });
 </script>
 

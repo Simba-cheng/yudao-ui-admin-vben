@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Rule } from 'ant-design-vue/es/form';
 
-import type { Ref } from 'vue';
+import type { ComponentPublicInstance, Ref } from 'vue';
 
 import type { ButtonSetting, SimpleFlowNode } from '../../consts';
 import type { UserTaskFormType } from '../../helpers';
 
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -144,6 +144,7 @@ const {
   btnDisplayNameEdit,
   changeBtnDisplayName,
   btnDisplayNameBlurEvent,
+  setInputRef,
 } = useButtonsSetting();
 
 const approveType = ref(ApproveType.USER);
@@ -453,9 +454,19 @@ function useButtonsSetting() {
   const buttonsSetting = ref<ButtonSetting[]>();
   // 操作按钮显示名称可编辑
   const btnDisplayNameEdit = ref<boolean[]>([]);
+  // 输入框的引用数组 - 内部使用，不暴露出去
+  const _btnDisplayNameInputRefs = ref<Array<HTMLInputElement | null>>([]);
+
   const changeBtnDisplayName = (index: number) => {
     btnDisplayNameEdit.value[index] = true;
+    // 输入框自动聚集
+    nextTick(() => {
+      if (_btnDisplayNameInputRefs.value[index]) {
+        _btnDisplayNameInputRefs.value[index]?.focus();
+      }
+    });
   };
+
   const btnDisplayNameBlurEvent = (index: number) => {
     btnDisplayNameEdit.value[index] = false;
     const buttonItem = buttonsSetting.value![index];
@@ -463,11 +474,21 @@ function useButtonsSetting() {
       buttonItem.displayName =
         buttonItem.displayName || OPERATION_BUTTON_NAME.get(buttonItem.id)!;
   };
+
+  // 设置 ref 引用的方法
+  const setInputRef = (
+    el: ComponentPublicInstance | Element | null,
+    index: number,
+  ) => {
+    _btnDisplayNameInputRefs.value[index] = el as HTMLInputElement;
+  };
+
   return {
     buttonsSetting,
     btnDisplayNameEdit,
     changeBtnDisplayName,
     btnDisplayNameBlurEvent,
+    setInputRef,
   };
 }
 
@@ -580,14 +601,14 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Drawer class="w-[580px]">
+  <Drawer class="w-2/5">
     <template #title>
       <div class="config-header">
         <Input
           v-if="showInput"
           ref="inputRef"
           type="text"
-          class="config-editable-input"
+          class="focus:border-blue-500 focus:shadow-[0_0_0_2px_rgba(24,144,255,0.2)] focus:outline-none"
           @blur="changeNodeName()"
           @press-enter="changeNodeName()"
           v-model:value="nodeName"
@@ -595,7 +616,7 @@ onMounted(() => {
         />
         <div v-else class="node-name">
           {{ nodeName }}
-          <IconifyIcon class="ml-1" icon="ep:edit-pen" @click="clickIcon()" />
+          <IconifyIcon class="ml-1" icon="lucide:edit-3" @click="clickIcon()" />
         </div>
       </div>
     </template>
@@ -603,7 +624,7 @@ onMounted(() => {
       v-if="currentNode.type === BpmNodeTypeEnum.USER_TASK_NODE"
       class="mb-3 flex items-center"
     >
-      <span class="mr-3 text-[16px]">审批类型 :</span>
+      <span class="mr-3 text-base">审批类型 :</span>
       <RadioGroup v-model:value="approveType">
         <RadioButton
           v-for="(item, index) in APPROVE_TYPE"
@@ -949,7 +970,7 @@ onMounted(() => {
                 label="超时时间设置"
                 v-if="configForm.timeoutHandlerEnable"
                 label-align="left"
-                class="h-[32px]"
+                class="h-8"
                 :label-col="{ span: 6 }"
                 :wrapper-col="{ span: 18 }"
               >
@@ -1105,7 +1126,7 @@ onMounted(() => {
         key="buttons"
       >
         <div class="p-1">
-          <div class="mb-4 text-[16px] font-bold">操作按钮</div>
+          <div class="mb-4 text-base font-bold">操作按钮</div>
 
           <!-- 表头 -->
           <Row class="border border-gray-200 px-4 py-3">
@@ -1123,19 +1144,20 @@ onMounted(() => {
                 {{ OPERATION_BUTTON_NAME.get(item.id) }}
               </Col>
               <Col :span="12" class="flex items-center">
-                <!-- TODO  v-mountedFocus 自动聚集需要迁移 -->
                 <Input
                   v-if="btnDisplayNameEdit[index]"
+                  :ref="(el) => setInputRef(el, index)"
                   type="text"
-                  class="input-edit max-w-[130px]"
+                  class="max-w-32 focus:border-blue-500 focus:shadow-[0_0_0_2px_rgba(24,144,255,0.2)] focus:outline-none"
                   @blur="btnDisplayNameBlurEvent(index)"
+                  @press-enter="btnDisplayNameBlurEvent(index)"
                   v-model:value="item.displayName"
                   :placeholder="item.displayName"
                 />
                 <Button v-else text @click="changeBtnDisplayName(index)">
                   <div class="flex items-center">
                     {{ item.displayName }}
-                    <IconifyIcon icon="ep:edit" class="ml-2" />
+                    <IconifyIcon icon="lucide:edit" class="ml-2" />
                   </div>
                 </Button>
               </Col>
@@ -1152,7 +1174,7 @@ onMounted(() => {
         v-if="formType === BpmModelFormType.NORMAL"
       >
         <div class="p-1">
-          <div class="mb-4 text-[16px] font-bold">字段权限</div>
+          <div class="mb-4 text-base font-bold">字段权限</div>
 
           <!-- 表头 -->
           <Row class="border border-gray-200 px-4 py-3">
@@ -1234,12 +1256,3 @@ onMounted(() => {
     </Tabs>
   </Drawer>
 </template>
-<style lang="scss" scoped>
-.input-edit {
-  &:focus {
-    outline: 0;
-    border-color: #40a9ff;
-    box-shadow: 0 0 0 2px rgb(24 144 255 / 20%);
-  }
-}
-</style>

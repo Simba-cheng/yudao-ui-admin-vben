@@ -61,7 +61,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<SystemOAuth2TokenApi.OAuth2Token>,
@@ -88,7 +88,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               icon: ACTION_ICON.DELETE,
               auth: ['system:oauth2-token:delete'],
               popConfirm: {
-                title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                title: `确定要强退令牌吗？`,
                 confirm: handleDelete.bind(null, row),
               },
             },

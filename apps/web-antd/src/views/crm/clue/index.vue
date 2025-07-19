@@ -79,7 +79,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async ({ page }, formValues) => {
           return await getCluePage({
-            page: page.currentPage,
+            pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
           });
@@ -90,7 +90,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<CrmClueApi.Clue>,

@@ -33,6 +33,18 @@ const [Modal, modalApi] = useVbenModal({
   title: '条件配置',
   destroyOnClose: true,
   draggable: true,
+  onOpenChange(isOpen) {
+    if (isOpen) {
+      // 获取传递的数据
+      const conditionObj = modalApi.getData();
+      if (conditionObj) {
+        conditionData.value.conditionType = conditionObj.conditionType;
+        conditionData.value.conditionExpression =
+          conditionObj.conditionExpression;
+        conditionData.value.conditionGroups = conditionObj.conditionGroups;
+      }
+    }
+  },
   async onConfirm() {
     // 校验表单
     if (!conditionRef.value) return;
@@ -50,17 +62,15 @@ const [Modal, modalApi] = useVbenModal({
   },
 });
 
-// TODO: jason  open 在 useVbenModal 中 onOpenChange 方法
-function open(conditionObj: any | undefined) {
-  if (conditionObj) {
-    conditionData.value.conditionType = conditionObj.conditionType;
-    conditionData.value.conditionExpression = conditionObj.conditionExpression;
-    conditionData.value.conditionGroups = conditionObj.conditionGroups;
-  }
-  modalApi.open();
+/**
+ * 打开条件配置弹窗，不暴露 modalApi 给父组件
+ */
+function openModal(conditionObj: any) {
+  modalApi.setData(conditionObj).open();
 }
-// TODO: jason  不需要暴露expose，直接使用modalApi.setData(formSetting).open()
-defineExpose({ open });
+
+// 暴露方法给父组件
+defineExpose({ openModal });
 </script>
 <template>
   <Modal class="w-1/2">

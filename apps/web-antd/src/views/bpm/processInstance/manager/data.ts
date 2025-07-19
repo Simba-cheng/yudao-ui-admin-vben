@@ -77,6 +77,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'RangePicker',
       componentProps: {
         ...getRangePickerDefaultProps(),
+        allowClear: true,
       },
     },
   ];
@@ -87,6 +88,12 @@ export function useGridColumns(
   onTaskClick: (task: BpmProcessInstanceApi.Task) => void,
 ): VxeTableGridOptions['columns'] {
   return [
+    {
+      field: 'id',
+      title: '流程编号',
+      minWidth: 320,
+      fixed: 'left',
+    },
     {
       field: 'name',
       title: '流程名称',
@@ -165,12 +172,6 @@ export function useGridColumns(
           );
         },
       },
-    },
-
-    {
-      field: 'id',
-      title: '流程编号',
-      minWidth: 320,
     },
     {
       title: '操作',

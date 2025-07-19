@@ -108,7 +108,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async ({ page }, formValues) => {
           return await getContactPageByCustomer({
-            page: page.currentPage,
+            pageNo: page.currentPage,
             pageSize: page.pageSize,
             customerId: props.customerId,
             ...formValues,
@@ -120,7 +120,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<CrmContactApi.Contact>,
@@ -132,7 +132,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Modal title="关联联系人" class="w-[40%]">
+  <Modal title="关联联系人" class="w-2/5">
     <FormModal @success="onRefresh" />
     <Grid>
       <template #toolbar-tools>

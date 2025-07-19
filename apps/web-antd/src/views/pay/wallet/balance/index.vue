@@ -21,7 +21,7 @@ const [WalletModal, walletModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
-function handleDetail(row: Required<PayWalletApi.WalletVO>) {
+function handleDetail(row: Required<PayWalletApi.Wallet>) {
   walletModalApi.setData(row).open();
 }
 
@@ -48,10 +48,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<PayWalletApi.WalletVO>,
+  } as VxeTableGridOptions<PayWalletApi.Wallet>,
 });
 </script>
 

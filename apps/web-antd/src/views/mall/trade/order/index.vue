@@ -29,6 +29,7 @@ function onRefresh() {
   gridApi.query();
 }
 const { push } = useRouter();
+// TODO xingyu：貌似详情，还点不进去哇？
 /** 详情 */
 function handleDetail(row: MallOrderApi.Order) {
   push({ name: 'TradeOrderDetail', params: { id: row.id } });
@@ -90,7 +91,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<MallOrderApi.Order>,

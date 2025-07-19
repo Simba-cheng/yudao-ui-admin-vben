@@ -2,7 +2,7 @@
 import type { BpmCategoryApi } from '#/api/bpm/category';
 import type { BpmProcessDefinitionApi } from '#/api/bpm/definition';
 
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
@@ -26,17 +26,23 @@ import ProcessDefinitionDetail from './modules/form.vue';
 
 defineOptions({ name: 'BpmProcessInstanceCreate' });
 
-const route = useRoute(); // 路由
+const route = useRoute();
 
-const searchName = ref(''); // 当前搜索关键字
-const isSearching = ref(false); // 是否处于搜索状态
-const processInstanceId: any = route.query.processInstanceId; // 流程实例编号。场景：重新发起时
-const loading = ref(true); // 加载中
-const categoryList: any = ref([]); // 分类的列表
-const activeCategory = ref(''); // 当前选中的分类
-const processDefinitionList = ref<
-  BpmProcessDefinitionApi.ProcessDefinitionVO[]
->([]); // 流程定义的列表
+// 当前搜索关键字
+const searchName = ref('');
+const isSearching = ref(false);
+// 流程实例编号。场景：重新发起时
+const processInstanceId: any = route.query.processInstanceId;
+// 加载中
+const loading = ref(true);
+// 分类的列表
+const categoryList: any = ref([]);
+// 当前选中的分类
+const activeCategory = ref('');
+// 流程定义的列表
+const processDefinitionList = ref<BpmProcessDefinitionApi.ProcessDefinition[]>(
+  [],
+);
 
 // 实现 groupBy 功能
 function groupBy(array: any[], key: string) {
@@ -112,7 +118,7 @@ async function handleGetProcessDefinitionList() {
 
 /** 用于存储搜索过滤后的流程定义 */
 const filteredProcessDefinitionList = ref<
-  BpmProcessDefinitionApi.ProcessDefinitionVO[]
+  BpmProcessDefinitionApi.ProcessDefinition[]
 >([]);
 
 /** 搜索流程 */
@@ -140,6 +146,11 @@ function handleQuery() {
     // 如果没有搜索关键字，恢复所有数据
     isSearching.value = false;
     filteredProcessDefinitionList.value = processDefinitionList.value;
+
+    // 恢复到第一个可用分类
+    if (availableCategories.value.length > 0) {
+      activeCategory.value = availableCategories.value[0].code;
+    }
   }
 }
 
@@ -159,20 +170,21 @@ const processDefinitionGroup = computed(() => {
   // 按照 categoryList 的顺序重新组织数据
   const orderedGroup: Record<
     string,
-    BpmProcessDefinitionApi.ProcessDefinitionVO[]
+    BpmProcessDefinitionApi.ProcessDefinition[]
   > = {};
-  categoryList.value.forEach((category: BpmCategoryApi.CategoryVO) => {
+  categoryList.value.forEach((category: BpmCategoryApi.Category) => {
     if (grouped[category.code]) {
       orderedGroup[category.code] = grouped[
         category.code
-      ] as BpmProcessDefinitionApi.ProcessDefinitionVO[];
+      ] as BpmProcessDefinitionApi.ProcessDefinition[];
     }
   });
   return orderedGroup;
 });
 
 /** 通过分类 code 获取对应的名称 */
-function getCategoryName(categoryCode: string) {
+// eslint-disable-next-line no-unused-vars
+function _getCategoryName(categoryCode: string) {
   return categoryList.value?.find((ctg: any) => ctg.code === categoryCode)
     ?.name;
 }
@@ -183,7 +195,7 @@ const processDefinitionDetailRef = ref();
 
 /** 处理选择流程的按钮操作 */
 async function handleSelect(
-  row: BpmProcessDefinitionApi.ProcessDefinitionVO,
+  row: BpmProcessDefinitionApi.ProcessDefinition,
   formVariables?: any,
 ) {
   // 设置选择的流程
@@ -203,16 +215,33 @@ const availableCategories = computed(() => {
   const availableCategoryCodes = Object.keys(processDefinitionGroup.value);
 
   // 过滤出有流程的分类
-  return categoryList.value.filter((category: BpmCategoryApi.CategoryVO) =>
+  return categoryList.value.filter((category: BpmCategoryApi.Category) =>
     availableCategoryCodes.includes(category.code),
   );
 });
 
 /** 获取 tab 的位置 */
-
 const tabPosition = computed(() => {
   return window.innerWidth < 768 ? 'top' : 'left';
 });
+
+/** 监听可用分类变化，自动设置正确的活动分类 */
+watch(
+  availableCategories,
+  (newCategories) => {
+    if (newCategories.length > 0) {
+      // 如果当前活动分类不在可用分类中，切换到第一个可用分类
+      const currentCategoryExists = newCategories.some(
+        (category: BpmCategoryApi.Category) =>
+          category.code === activeCategory.value,
+      );
+      if (!currentCategoryExists) {
+        activeCategory.value = newCategories[0].code;
+      }
+    }
+  },
+  { immediate: true },
+);
 
 /** 初始化 */
 onMounted(() => {
@@ -234,10 +263,10 @@ onMounted(() => {
         :loading="loading"
       >
         <template #extra>
-          <div class="flex items-end">
+          <div class="flex h-full items-center justify-center">
             <InputSearch
               v-model:value="searchName"
-              class="!w-50% mb-15px"
+              class="!w-50%"
               placeholder="请输入流程名称检索"
               allow-clear
               @input="handleQuery"
@@ -253,15 +282,15 @@ onMounted(() => {
               :key="category.code"
               :tab="category.name"
             >
-              <Row :gutter="[16, 16]">
+              <Row :gutter="[16, 16]" :wrap="true">
                 <Col
                   v-for="definition in processDefinitionGroup[category.code]"
                   :key="definition.id"
                   :xs="24"
                   :sm="12"
                   :md="8"
-                  :lg="6"
-                  :xl="4"
+                  :lg="8"
+                  :xl="6"
                   @click="handleSelect(definition)"
                 >
                   <Card
@@ -272,10 +301,10 @@ onMounted(() => {
                     }"
                     :body-style="{
                       width: '100%',
+                      padding: '16px',
                     }"
                   >
                     <div class="flex items-center">
-                      <!-- TODO @ziye：icon、name 会告警~~ -->
                       <img
                         v-if="definition.icon"
                         :src="definition.icon"
@@ -284,16 +313,14 @@ onMounted(() => {
                       />
 
                       <div v-else class="flow-icon flex-shrink-0">
-                        <Tooltip :title="definition.name">
-                          <span class="text-xs text-white">
-                            {{ definition.name?.slice(0, 2) }}
-                          </span>
-                        </Tooltip>
+                        <span class="text-xs text-white">
+                          {{ definition.name?.slice(0, 2) }}
+                        </span>
                       </div>
                       <span class="ml-3 flex-1 truncate text-base">
                         <Tooltip
                           placement="topLeft"
-                          :title="`${definition.name}`"
+                          :title="`${definition.description}`"
                         >
                           {{ definition.name }}
                         </Tooltip>
@@ -305,7 +332,7 @@ onMounted(() => {
             </Tabs.TabPane>
           </Tabs>
         </div>
-        <div v-else class="!py-200px text-center">
+        <div v-else class="!py-48 text-center">
           <Space direction="vertical" size="large">
             <span class="text-gray-500">没有找到搜索结果</span>
           </Space>

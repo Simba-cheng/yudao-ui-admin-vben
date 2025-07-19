@@ -4,10 +4,11 @@ import { requestClient } from '#/api/request';
 
 export namespace BpmProcessDefinitionApi {
   /** 流程定义 */
-  // TODO @ziye：不用 VO 后缀哈
-  export interface ProcessDefinitionVO {
+  export interface ProcessDefinition {
     id: string;
     version: number;
+    name: string;
+    description: string;
     deploymentTime: number;
     suspensionState: number;
     modelType: number;
@@ -15,12 +16,14 @@ export namespace BpmProcessDefinitionApi {
     formType?: number;
     bpmnXml?: string;
     simpleModel?: string;
+    formFields?: string[];
+    icon?: string;
   }
 }
 
 /** 查询流程定义 */
 export async function getProcessDefinition(id?: string, key?: string) {
-  return requestClient.get<BpmProcessDefinitionApi.ProcessDefinitionVO>(
+  return requestClient.get<BpmProcessDefinitionApi.ProcessDefinition>(
     '/bpm/process-definition/get',
     {
       params: { id, key },
@@ -31,13 +34,13 @@ export async function getProcessDefinition(id?: string, key?: string) {
 /** 分页查询流程定义 */
 export async function getProcessDefinitionPage(params: PageParam) {
   return requestClient.get<
-    PageResult<BpmProcessDefinitionApi.ProcessDefinitionVO>
+    PageResult<BpmProcessDefinitionApi.ProcessDefinition>
   >('/bpm/process-definition/page', { params });
 }
 
 /** 查询流程定义列表 */
 export async function getProcessDefinitionList(params: any) {
-  return requestClient.get<BpmProcessDefinitionApi.ProcessDefinitionVO[]>(
+  return requestClient.get<BpmProcessDefinitionApi.ProcessDefinition[]>(
     '/bpm/process-definition/list',
     {
       params,
@@ -48,6 +51,6 @@ export async function getProcessDefinitionList(params: any) {
 /** 查询流程定义列表（简单列表） */
 export async function getSimpleProcessDefinitionList() {
   return requestClient.get<
-    PageResult<BpmProcessDefinitionApi.ProcessDefinitionVO>
+    PageResult<BpmProcessDefinitionApi.ProcessDefinition>
   >('/bpm/process-definition/simple-list');
 }

@@ -4,7 +4,7 @@ import type { PropType } from 'vue';
 
 import type { ActionItem, PopConfirm } from './typing';
 
-import { computed, toRaw } from 'vue';
+import { computed, unref, watch } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { IconifyIcon } from '@vben/icons';
@@ -41,6 +41,7 @@ const props = defineProps({
 
 const { hasAccessByCodes } = useAccess();
 
+/** 检查是否显示 */
 function isIfShow(action: ActionItem): boolean {
   const ifShow = action.ifShow;
   let isIfShow = true;
@@ -57,84 +58,102 @@ function isIfShow(action: ActionItem): boolean {
   return isIfShow;
 }
 
+/** 处理按钮 actions */
 const getActions = computed(() => {
-  const actions = toRaw(props.actions) || [];
-  return actions
-    .filter((action: ActionItem) => {
-      return isIfShow(action);
-    })
-    .map((action: ActionItem) => {
-      const { popConfirm } = action;
-      return {
-        type: action.type || 'link',
-        ...action,
-        ...popConfirm,
-        onConfirm: popConfirm?.confirm,
-        onCancel: popConfirm?.cancel,
-        enable: !!popConfirm,
-      };
-    });
+  const actions = props.actions || [];
+  return actions.filter((action: ActionItem) => isIfShow(action));
 });
 
-const getDropdownList = computed((): any[] => {
-  const dropDownActions = toRaw(props.dropDownActions) || [];
-  return dropDownActions
-    .filter((action: ActionItem) => {
-      return isIfShow(action);
-    })
-    .map((action: ActionItem, index: number) => {
-      const { label, popConfirm } = action;
-      delete action.icon;
-      return {
-        ...action,
-        ...popConfirm,
-        onConfirm: popConfirm?.confirm,
-        onCancel: popConfirm?.cancel,
-        text: label,
-        divider: index < dropDownActions.length - 1 ? props.divider : false,
-      };
-    });
+/** 处理下拉菜单 actions */
+const getDropdownList = computed(() => {
+  const dropDownActions = props.dropDownActions || [];
+  return dropDownActions.filter((action: ActionItem) => isIfShow(action));
 });
 
-function getPopConfirmProps(attrs: PopConfirm) {
-  const originAttrs: any = attrs;
-  delete originAttrs.icon;
-  if (attrs.confirm && isFunction(attrs.confirm)) {
-    originAttrs.onConfirm = attrs.confirm;
-    delete originAttrs.confirm;
+/** Space 组件的 size */
+const spaceSize = computed(() => {
+  const actions = unref(getActions);
+  return actions?.some((item: ActionItem) => item.type === 'link') ? 0 : 8;
+});
+
+/** 获取 PopConfirm 属性 */
+function getPopConfirmProps(popConfirm: PopConfirm) {
+  if (!popConfirm) return {};
+
+  const attrs: Record<string, any> = {};
+
+  // 复制基本属性，排除函数
+  Object.keys(popConfirm).forEach((key) => {
+    if (key !== 'confirm' && key !== 'cancel' && key !== 'icon') {
+      attrs[key] = popConfirm[key as keyof PopConfirm];
+    }
+  });
+
+  // 单独处理事件函数
+  if (popConfirm.confirm && isFunction(popConfirm.confirm)) {
+    attrs.onConfirm = popConfirm.confirm;
   }
-  if (attrs.cancel && isFunction(attrs.cancel)) {
-    originAttrs.onCancel = attrs.cancel;
-    delete originAttrs.cancel;
+  if (popConfirm.cancel && isFunction(popConfirm.cancel)) {
+    attrs.onCancel = popConfirm.cancel;
   }
-  return originAttrs;
+
+  return attrs;
 }
 
+/** 获取 Button 属性 */
 function getButtonProps(action: ActionItem) {
-  const res = {
-    type: action.type || 'primary',
-    ...action,
+  return {
+    type: action.type || 'link',
+    danger: action.danger || false,
+    disabled: action.disabled,
+    loading: action.loading,
+    size: action.size,
   };
-  delete res.icon;
-  return res;
 }
 
+/** 获取 Tooltip 属性 */
+function getTooltipProps(tooltip: any | string) {
+  if (!tooltip) return {};
+  return typeof tooltip === 'string' ? { title: tooltip } : { ...tooltip };
+}
+
+/** 处理菜单点击 */
 function handleMenuClick(e: any) {
   const action = getDropdownList.value[e.key];
+  if (action && action.onClick && isFunction(action.onClick)) {
+    action.onClick();
+  }
+}
+
+/** 生成稳定的 key */
+function getActionKey(action: ActionItem, index: number) {
+  return `${action.label || ''}-${action.type || ''}-${index}`;
+}
+
+/** 处理按钮点击 */
+function handleButtonClick(action: ActionItem) {
   if (action.onClick && isFunction(action.onClick)) {
     action.onClick();
   }
 }
+
+// 监听props变化，强制重新计算
+watch(
+  () => [props.actions, props.dropDownActions],
+  () => {
+    // 这里不需要额外处理，computed会自动重新计算
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div class="table-actions">
-    <Space
-      :size="
-        getActions?.some((item: ActionItem) => item.type === 'link') ? 0 : 8
-      "
-    >
-      <template v-for="(action, index) in getActions" :key="index">
+    <Space :size="spaceSize">
+      <template
+        v-for="(action, index) in getActions"
+        :key="getActionKey(action, index)"
+      >
         <Popconfirm
           v-if="action.popConfirm"
           v-bind="getPopConfirmProps(action.popConfirm)"
@@ -142,13 +161,7 @@ function handleMenuClick(e: any) {
           <template v-if="action.popConfirm.icon" #icon>
             <IconifyIcon :icon="action.popConfirm.icon" />
           </template>
-          <Tooltip
-            v-bind="
-              typeof action.tooltip === 'string'
-                ? { title: action.tooltip }
-                : { ...action.tooltip }
-            "
-          >
+          <Tooltip v-bind="getTooltipProps(action.tooltip)">
             <Button v-bind="getButtonProps(action)">
               <template v-if="action.icon" #icon>
                 <IconifyIcon :icon="action.icon" />
@@ -157,15 +170,11 @@ function handleMenuClick(e: any) {
             </Button>
           </Tooltip>
         </Popconfirm>
-        <Tooltip
-          v-else
-          v-bind="
-            typeof action.tooltip === 'string'
-              ? { title: action.tooltip }
-              : { ...action.tooltip }
-          "
-        >
-          <Button v-bind="getButtonProps(action)" @click="action.onClick">
+        <Tooltip v-else v-bind="getTooltipProps(action.tooltip)">
+          <Button
+            v-bind="getButtonProps(action)"
+            @click="handleButtonClick(action)"
+          >
             <template v-if="action.icon" #icon>
               <IconifyIcon :icon="action.icon" />
             </template>
@@ -177,7 +186,7 @@ function handleMenuClick(e: any) {
 
     <Dropdown v-if="getDropdownList.length > 0" :trigger="['hover']">
       <slot name="more">
-        <Button :type="getDropdownList[0].type">
+        <Button type="link">
           <template #icon>
             {{ $t('page.action.more') }}
             <IconifyIcon icon="lucide:ellipsis-vertical" />
@@ -185,8 +194,13 @@ function handleMenuClick(e: any) {
         </Button>
       </slot>
       <template #overlay>
-        <Menu @click="handleMenuClick">
-          <Menu.Item v-for="(action, index) in getDropdownList" :key="index">
+        <Menu>
+          <Menu.Item
+            v-for="(action, index) in getDropdownList"
+            :key="index"
+            :disabled="action.disabled"
+            @click="!action.popConfirm && handleMenuClick({ key: index })"
+          >
             <template v-if="action.popConfirm">
               <Popconfirm v-bind="getPopConfirmProps(action.popConfirm)">
                 <template v-if="action.popConfirm.icon" #icon>
@@ -201,7 +215,7 @@ function handleMenuClick(e: any) {
                 >
                   <IconifyIcon v-if="action.icon" :icon="action.icon" />
                   <span :class="action.icon ? 'ml-1' : ''">
-                    {{ action.text }}
+                    {{ action.label }}
                   </span>
                 </div>
               </Popconfirm>
@@ -224,6 +238,7 @@ function handleMenuClick(e: any) {
     </Dropdown>
   </div>
 </template>
+
 <style lang="scss">
 .table-actions {
   .ant-btn-link {

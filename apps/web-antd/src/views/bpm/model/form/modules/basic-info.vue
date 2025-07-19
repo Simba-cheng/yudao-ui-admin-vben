@@ -11,7 +11,7 @@ import type { SystemUserApi } from '#/api/system/user';
 import { ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { CircleHelp, IconifyIcon, Plus, X } from '@vben/icons';
+import { IconifyIcon } from '@vben/icons';
 
 import {
   Avatar,
@@ -25,11 +25,11 @@ import {
 
 import { DeptSelectModal, UserSelectModal } from '#/components/select-modal';
 import { ImageUpload } from '#/components/upload';
-import { DICT_TYPE, getBoolDictOptions, getIntDictOptions } from '#/utils';
+import { DICT_TYPE, getDictOptions } from '#/utils';
 
 const props = defineProps({
   categoryList: {
-    type: Array as PropType<BpmCategoryApi.CategoryVO[]>,
+    type: Array as PropType<BpmCategoryApi.Category[]>,
     required: true,
   },
   userList: {
@@ -254,7 +254,10 @@ defineExpose({ validate });
             "
             placement="top"
           >
-            <CircleHelp class="ml-1 size-5 text-gray-900" />
+            <IconifyIcon
+              icon="lucide:circle-help"
+              class="ml-1 size-5 text-gray-900"
+            />
           </Tooltip>
         </div>
       </Form.Item>
@@ -292,7 +295,7 @@ defineExpose({ validate });
         <Radio.Group v-model:value="modelData.type">
           <!-- TODO BPMN 流程类型需要整合，暂时禁用 -->
           <Radio
-            v-for="dict in getIntDictOptions(DICT_TYPE.BPM_MODEL_TYPE)"
+            v-for="dict in getDictOptions(DICT_TYPE.BPM_MODEL_TYPE, 'number')"
             :key="dict.value"
             :value="dict.value"
             :disabled="dict.value === 10"
@@ -304,10 +307,11 @@ defineExpose({ validate });
       <Form.Item label="是否可见" name="visible" class="mb-5">
         <Radio.Group v-model:value="modelData.visible">
           <Radio
-            v-for="(dict, index) in getBoolDictOptions(
+            v-for="dict in getDictOptions(
               DICT_TYPE.INFRA_BOOLEAN_STRING,
+              'boolean',
             )"
-            :key="index"
+            :key="dict.label"
             :value="dict.value"
           >
             {{ dict.label }}
@@ -331,7 +335,7 @@ defineExpose({ validate });
           <div
             v-for="user in selectedStartUsers"
             :key="user.id"
-            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 hover:bg-gray-200"
+            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             <Avatar
               class="m-1"
@@ -342,8 +346,11 @@ defineExpose({ validate });
             <Avatar class="m-1" :size="28" v-else>
               {{ user.nickname?.substring(0, 1) }}
             </Avatar>
-            {{ user.nickname }}
-            <X
+            <span class="text-gray-700 dark:text-gray-200">
+              {{ user.nickname }}
+            </span>
+            <IconifyIcon
+              icon="lucide:x"
               class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500"
               @click="handleRemoveStartUser(user)"
             />
@@ -354,10 +361,7 @@ defineExpose({ validate });
             class="flex items-center"
           >
             <template #icon>
-              <IconifyIcon
-                icon="mdi:account-plus-outline"
-                class="size-[18px]"
-              />
+              <IconifyIcon icon="lucide:user-plus" class="size-4" />
             </template>
             选择人员
           </Button>
@@ -369,11 +373,14 @@ defineExpose({ validate });
           <div
             v-for="dept in selectedStartDepts"
             :key="dept.id"
-            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 shadow-sm hover:bg-gray-200"
+            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 shadow-sm hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
-            <IconifyIcon icon="ep:office-building" class="size-6 px-1" />
-            {{ dept.name }}
-            <X
+            <IconifyIcon icon="lucide:building" class="size-6 px-1" />
+            <span class="text-gray-700 dark:text-gray-200">
+              {{ dept.name }}
+            </span>
+            <IconifyIcon
+              icon="lucide:x"
               class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500"
               @click="handleRemoveStartDept(dept)"
             />
@@ -384,7 +391,7 @@ defineExpose({ validate });
             class="flex items-center"
           >
             <template #icon>
-              <Plus class="size-[18px]" />
+              <IconifyIcon icon="lucide:user-plus" class="size-4" />
             </template>
             选择部门
           </Button>
@@ -395,7 +402,7 @@ defineExpose({ validate });
           <div
             v-for="user in selectedManagerUsers"
             :key="user.id"
-            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 hover:bg-gray-200"
+            class="relative flex h-9 items-center rounded-full bg-gray-100 pr-2 hover:bg-gray-200 dark:border dark:border-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             <Avatar
               class="m-1"
@@ -406,8 +413,11 @@ defineExpose({ validate });
             <Avatar class="m-1" :size="28" v-else>
               {{ user.nickname?.substring(0, 1) }}
             </Avatar>
-            {{ user.nickname }}
-            <X
+            <span class="text-gray-700 dark:text-gray-200">
+              {{ user.nickname }}
+            </span>
+            <IconifyIcon
+              icon="lucide:x"
               class="ml-2 size-4 cursor-pointer text-gray-400 hover:text-red-500"
               @click="handleRemoveManagerUser(user)"
             />
@@ -418,10 +428,7 @@ defineExpose({ validate });
             class="flex items-center"
           >
             <template #icon>
-              <IconifyIcon
-                icon="mdi:account-plus-outline"
-                class="size-[18px]"
-              />
+              <IconifyIcon icon="lucide:user-plus" class="size-4" />
             </template>
             选择人员
           </Button>
@@ -431,6 +438,7 @@ defineExpose({ validate });
 
     <!-- 用户选择弹窗 -->
     <UserSelectModalComp
+      class="w-3/5"
       v-model:value="selectedUsers"
       :multiple="true"
       title="选择用户"
@@ -440,20 +448,10 @@ defineExpose({ validate });
     />
     <!-- 部门选择对话框 -->
     <DeptSelectModalComp
+      class="w-3/5"
       title="发起人部门选择"
       :check-strictly="true"
       @confirm="handleDeptSelectConfirm"
     />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.upload-img-placeholder {
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &:hover {
-    border-color: #1890ff !important;
-  }
-}
-</style>

@@ -33,7 +33,12 @@ function onRefresh() {
 
 /** 创建回款 */
 function handleCreate() {
-  formModalApi.setData(null).open();
+  formModalApi
+    .setData({
+      contractId: props.contractId,
+      customerId: props.customerId,
+    })
+    .open();
 }
 
 /** 编辑回款 */
@@ -86,7 +91,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<CrmReceivableApi.Receivable>,

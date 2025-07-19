@@ -13,7 +13,7 @@ import { useGridColumns, useGridFormSchema } from './data';
 defineOptions({ name: 'BpmTodoTask' });
 
 /** 办理任务 */
-function handleAudit(row: BpmTaskApi.TaskVO) {
+function handleAudit(row: BpmTaskApi.Task) {
   console.warn(row);
   router.push({
     name: 'BpmProcessInstanceDetail',
@@ -47,13 +47,13 @@ const [Grid] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
     cellConfig: {
       height: 64,
     },
-  } as VxeTableGridOptions<BpmTaskApi.TaskVO>,
+  } as VxeTableGridOptions<BpmTaskApi.Task>,
 });
 </script>
 

@@ -6,13 +6,14 @@ import type { SystemUserApi } from '#/api/system/user';
 import { ref } from 'vue';
 
 import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { message } from 'ant-design-vue';
+import { Card, message } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteUser,
+  deleteUserList,
   exportUser,
   getUserPage,
   updateUserStatus,
@@ -99,6 +100,31 @@ async function handleDelete(row: SystemUserApi.User) {
   }
 }
 
+const checkedIds = ref<number[]>([]);
+function handleRowCheckboxChange({
+  records,
+}: {
+  records: SystemUserApi.User[];
+}) {
+  checkedIds.value = records.map((item) => item.id as number);
+}
+
+/** 批量删除用户 */
+async function handleDeleteBatch() {
+  const hideLoading = message.loading({
+    content: $t('ui.actionMessage.deleting'),
+    duration: 0,
+    key: 'action_process_msg',
+  });
+  try {
+    await deleteUserList(checkedIds.value);
+    message.success($t('ui.actionMessage.deleteSuccess'));
+    onRefresh();
+  } finally {
+    hideLoading();
+  }
+}
+
 /** 重置密码 */
 function handleResetPassword(row: SystemUserApi.User) {
   resetPasswordModalApi.setData(row).open();
@@ -157,12 +183,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'id',
+      isHover: true,
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<SystemUserApi.User>,
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
 });
 </script>
 
@@ -184,9 +215,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
     <div class="flex h-full w-full">
       <!-- 左侧部门树 -->
-      <div class="h-full w-1/6 pr-4">
+      <Card class="mr-4 h-full w-1/6">
         <DeptTree @select="handleDeptSelect" />
-      </div>
+      </Card>
       <!-- 右侧用户列表 -->
       <div class="w-5/6">
         <Grid table-title="用户列表">
@@ -214,6 +245,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
                   auth: ['system:user:import'],
                   onClick: handleImport,
                 },
+                {
+                  label: '批量删除',
+                  type: 'primary',
+                  danger: true,
+                  disabled: isEmpty(checkedIds),
+                  icon: ACTION_ICON.DELETE,
+                  auth: ['system:user:delete'],
+                  onClick: handleDeleteBatch,
+                },
               ]"
             />
           </template>
@@ -234,7 +274,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
                   icon: ACTION_ICON.DELETE,
                   auth: ['system:user:delete'],
                   popConfirm: {
-                    title: $t('ui.actionMessage.deleteConfirm', [row.name]),
+                    title: $t('ui.actionMessage.deleteConfirm', [row.username]),
                     confirm: handleDelete.bind(null, row),
                   },
                 },

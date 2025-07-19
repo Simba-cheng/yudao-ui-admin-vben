@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Recordable } from '@vben/types';
 
-import type { SystemDeptApi } from '#/api/system/dept';
+import type { SystemMenuApi } from '#/api/system/menu';
 import type { SystemRoleApi } from '#/api/system/role';
 
 import { ref } from 'vue';
@@ -21,7 +21,7 @@ import { useAssignMenuFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
 
-const menuTree = ref<SystemDeptApi.Dept[]>([]); // 菜单树
+const menuTree = ref<SystemMenuApi.Menu[]>([]); // 菜单树
 const menuLoading = ref(false); // 加载菜单列表
 const isAllSelected = ref(false); // 全选状态
 const isExpanded = ref(false); // 展开状态
@@ -90,7 +90,7 @@ async function loadMenuTree() {
   menuLoading.value = true;
   try {
     const data = await getMenuList();
-    menuTree.value = handleTree(data) as SystemDeptApi.Dept[];
+    menuTree.value = handleTree(data) as SystemMenuApi.Menu[];
   } finally {
     menuLoading.value = false;
   }
@@ -139,10 +139,9 @@ function getNodeClass(node: Recordable<any>) {
 </script>
 
 <template>
-  <Modal title="数据权限" class="w-[40%]">
+  <Modal title="数据权限" class="w-2/5">
     <Form class="mx-4">
       <template #menuIds="slotProps">
-        <!-- TODO @芋艿：可优化，使用 antd 的 tree？原因是，更原生 -->
         <VbenTree
           :spinning="menuLoading"
           :tree-data="menuTree"

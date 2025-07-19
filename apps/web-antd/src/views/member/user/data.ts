@@ -56,9 +56,6 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'ImageUpload',
       fieldName: 'avatar',
       label: '头像',
-      componentProps: {
-        maxSize: 1,
-      },
     },
     {
       component: 'Input',
@@ -228,7 +225,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
               Tag,
               {
                 key: index,
-                class: 'mr-5px',
+                class: 'mr-1',
                 color: 'blue',
               },
               () => tagName,

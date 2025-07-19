@@ -4,7 +4,7 @@ import type { BpmProcessDefinitionApi } from '#/api/bpm/definition';
 import { DICT_TYPE } from '#/utils';
 
 /** 列表的字段 */
-export function useGridColumns(): VxeTableGridOptions<BpmProcessDefinitionApi.ProcessDefinitionVO>['columns'] {
+export function useGridColumns(): VxeTableGridOptions<BpmProcessDefinitionApi.ProcessDefinition>['columns'] {
   return [
     {
       field: 'id',
@@ -20,7 +20,13 @@ export function useGridColumns(): VxeTableGridOptions<BpmProcessDefinitionApi.Pr
       field: 'icon',
       title: '流程图标',
       minWidth: 100,
-      slots: { default: 'icon' },
+      cellRender: {
+        name: 'CellImage',
+        props: {
+          width: 24,
+          height: 24,
+        },
+      },
     },
     {
       field: 'startUsers',
@@ -47,7 +53,9 @@ export function useGridColumns(): VxeTableGridOptions<BpmProcessDefinitionApi.Pr
       field: 'version',
       title: '流程版本',
       minWidth: 80,
-      slots: { default: 'version' },
+      cellRender: {
+        name: 'CellTag',
+      },
     },
     {
       field: 'deploymentTime',

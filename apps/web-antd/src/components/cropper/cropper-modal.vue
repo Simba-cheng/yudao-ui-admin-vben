@@ -4,6 +4,7 @@ import type { CropendResult, CropperModalProps, CropperType } from './typing';
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 import { dataURLtoBlob, isFunction } from '@vben/utils';
 
@@ -36,13 +37,20 @@ const cropper = ref<CropperType>();
 let scaleX = 1;
 let scaleY = 1;
 
-const prefixCls = 'cropper-am';
 const [Modal, modalApi] = useVbenModal({
   onConfirm: handleOk,
   onOpenChange(isOpen) {
     if (isOpen) {
       // 打开时，进行 loading 加载。后续 CropperImage 组件加载完毕，会自动关闭 loading（通过 handleReady）
       modalLoading(true);
+      const img = new Image();
+      img.src = src.value;
+      img.addEventListener('load', () => {
+        modalLoading(false);
+      });
+      img.addEventListener('error', () => {
+        modalLoading(false);
+      });
     } else {
       // 关闭时，清空右侧预览
       previewSource.value = '';
@@ -118,11 +126,15 @@ async function handleOk() {
     :confirm-text="$t('ui.cropper.okText')"
     :fullscreen-button="false"
     :title="$t('ui.cropper.modalTitle')"
-    class="w-[800px]"
+    class="w-2/3"
   >
-    <div :class="prefixCls">
-      <div :class="`${prefixCls}-left`" class="w-full">
-        <div :class="`${prefixCls}-cropper`">
+    <div class="flex h-96">
+      <!-- 左侧区域 -->
+      <div class="h-full w-3/5">
+        <!-- 裁剪器容器 -->
+        <div
+          class="relative h-[300px] bg-gradient-to-b from-neutral-50 to-neutral-200"
+        >
           <CropperImage
             v-if="src"
             :circled="circled"
@@ -133,7 +145,8 @@ async function handleOk() {
           />
         </div>
 
-        <div :class="`${prefixCls}-toolbar`">
+        <!-- 工具栏 -->
+        <div class="mt-4 flex items-center justify-between">
           <Upload
             :before-upload="handleBeforeUpload"
             :file-list="[]"
@@ -143,7 +156,7 @@ async function handleOk() {
               <Button size="small" type="primary">
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[ant-design--upload-outlined]"></span>
+                    <IconifyIcon icon="lucide:upload" />
                   </div>
                 </template>
               </Button>
@@ -159,7 +172,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[ant-design--reload-outlined]"></span>
+                    <IconifyIcon icon="lucide:rotate-ccw" />
                   </div>
                 </template>
               </Button>
@@ -176,9 +189,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span
-                      class="icon-[ant-design--rotate-left-outlined]"
-                    ></span>
+                    <IconifyIcon icon="ant-design:rotate-left-outlined" />
                   </div>
                 </template>
               </Button>
@@ -189,16 +200,13 @@ async function handleOk() {
             >
               <Button
                 :disabled="!src"
-                pre-icon="ant-design:rotate-right-outlined"
                 size="small"
                 type="primary"
                 @click="handlerToolbar('rotate', 45)"
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span
-                      class="icon-[ant-design--rotate-right-outlined]"
-                    ></span>
+                    <IconifyIcon icon="ant-design:rotate-right-outlined" />
                   </div>
                 </template>
               </Button>
@@ -212,7 +220,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[vaadin--arrows-long-h]"></span>
+                    <IconifyIcon icon="vaadin:arrows-long-h" />
                   </div>
                 </template>
               </Button>
@@ -226,7 +234,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[vaadin--arrows-long-v]"></span>
+                    <IconifyIcon icon="vaadin:arrows-long-v" />
                   </div>
                 </template>
               </Button>
@@ -240,7 +248,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[ant-design--zoom-in-outlined]"></span>
+                    <IconifyIcon icon="lucide:zoom-in" />
                   </div>
                 </template>
               </Button>
@@ -254,7 +262,7 @@ async function handleOk() {
               >
                 <template #icon>
                   <div class="flex items-center justify-center">
-                    <span class="icon-[ant-design--zoom-out-outlined]"></span>
+                    <IconifyIcon icon="lucide:zoom-out" />
                   </div>
                 </template>
               </Button>
@@ -262,16 +270,26 @@ async function handleOk() {
           </Space>
         </div>
       </div>
-      <div :class="`${prefixCls}-right`">
-        <div :class="`${prefixCls}-preview`">
+
+      <!-- 右侧区域 -->
+      <div class="h-full w-2/5">
+        <!-- 预览区域 -->
+        <div
+          class="mx-auto h-56 w-56 overflow-hidden rounded-full border border-gray-200"
+        >
           <img
             v-if="previewSource"
             :alt="$t('ui.cropper.preview')"
             :src="previewSource"
+            class="h-full w-full object-cover"
           />
         </div>
+
+        <!-- 头像组合预览 -->
         <template v-if="previewSource">
-          <div :class="`${prefixCls}-group`">
+          <div
+            class="mt-2 flex items-center justify-around border-t border-gray-200 pt-2"
+          >
             <Avatar :src="previewSource" size="large" />
             <Avatar :size="48" :src="previewSource" />
             <Avatar :size="64" :src="previewSource" />
@@ -282,76 +300,3 @@ async function handleOk() {
     </div>
   </Modal>
 </template>
-
-<style lang="scss">
-.cropper-am {
-  display: flex;
-
-  &-left,
-  &-right {
-    height: 340px;
-  }
-
-  &-left {
-    width: 55%;
-  }
-
-  &-right {
-    width: 45%;
-  }
-
-  &-cropper {
-    height: 300px;
-    background: #eee;
-    background-image:
-      linear-gradient(
-        45deg,
-        rgb(0 0 0 / 25%) 25%,
-        transparent 0,
-        transparent 75%,
-        rgb(0 0 0 / 25%) 0
-      ),
-      linear-gradient(
-        45deg,
-        rgb(0 0 0 / 25%) 25%,
-        transparent 0,
-        transparent 75%,
-        rgb(0 0 0 / 25%) 0
-      );
-    background-position:
-      0 0,
-      12px 12px;
-    background-size: 24px 24px;
-  }
-
-  &-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
-
-  &-preview {
-    width: 220px;
-    height: 220px;
-    margin: 0 auto;
-    overflow: hidden;
-    border: 1px solid #eee;
-    border-radius: 50%;
-
-    img {
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  &-group {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding-top: 8px;
-    margin-top: 8px;
-    border-top: 1px solid #eee;
-  }
-}
-</style>

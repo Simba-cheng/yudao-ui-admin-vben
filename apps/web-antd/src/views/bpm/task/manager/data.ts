@@ -21,6 +21,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'RangePicker',
       componentProps: {
         ...getRangePickerDefaultProps(),
+        allowClear: true,
       },
     },
   ];
@@ -39,12 +40,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'processInstance.startUser.nickname',
       title: '发起人',
       minWidth: 120,
-    },
-    {
-      field: 'createTime',
-      title: '发起时间',
-      minWidth: 180,
-      formatter: 'formatDateTime',
     },
     {
       field: 'name',

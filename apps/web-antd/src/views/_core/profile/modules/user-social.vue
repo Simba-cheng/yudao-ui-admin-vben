@@ -6,6 +6,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import { confirm } from '@vben/common-ui';
+import { getUrlValue } from '@vben/utils';
 
 import { Button, Card, Image, message } from 'ant-design-vue';
 
@@ -149,13 +150,6 @@ async function bindSocial() {
   window.history.replaceState({}, '', location.pathname);
 }
 
-// TODO @芋艿：后续搞到 util 里；
-// 双层 encode 需要在回调后进行 decode
-function getUrlValue(key: string): string {
-  const url = new URL(decodeURIComponent(location.href));
-  return url.searchParams.get(key) ?? '';
-}
-
 /** 初始化 */
 onMounted(() => {
   bindSocial();
@@ -181,9 +175,7 @@ onMounted(() => {
             />
             <div class="flex flex-1 items-center justify-between">
               <div class="flex flex-col">
-                <h4
-                  class="mb-[4px] text-[14px] text-black/85 dark:text-white/85"
-                >
+                <h4 class="mb-1 text-sm text-black/85 dark:text-white/85">
                   {{ getDictLabel(DICT_TYPE.SYSTEM_SOCIAL_TYPE, item.type) }}
                 </h4>
                 <span class="text-black/45 dark:text-white/45">
@@ -191,9 +183,9 @@ onMounted(() => {
                     {{ item.socialUser?.nickname || item.socialUser?.openid }}
                   </template>
                   <template v-else>
-                    绑定{{
-                      getDictLabel(DICT_TYPE.SYSTEM_SOCIAL_TYPE, item.type)
-                    }}账号
+                    绑定
+                    {{ getDictLabel(DICT_TYPE.SYSTEM_SOCIAL_TYPE, item.type) }}
+                    账号
                   </template>
                 </span>
               </div>

@@ -33,12 +33,12 @@ function handleCreate() {
 }
 
 /** 编辑用户分组 */
-function handleEdit(row: BpmUserGroupApi.UserGroupVO) {
+function handleEdit(row: BpmUserGroupApi.UserGroup) {
   formModalApi.setData(row).open();
 }
 
 /** 删除用户分组 */
-async function handleDelete(row: BpmUserGroupApi.UserGroupVO) {
+async function handleDelete(row: BpmUserGroupApi.UserGroup) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.name]),
     key: 'action_key_msg',
@@ -85,10 +85,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<BpmUserGroupApi.UserGroupVO>,
+  } as VxeTableGridOptions<BpmUserGroupApi.UserGroup>,
 });
 </script>
 

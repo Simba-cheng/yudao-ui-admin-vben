@@ -13,7 +13,7 @@ import { useGridColumns, useGridFormSchema } from './data';
 defineOptions({ name: 'BpmManagerTask' });
 
 /** 查看历史 */
-function handleHistory(row: BpmTaskApi.TaskManagerVO) {
+function handleHistory(row: BpmTaskApi.TaskManager) {
   router.push({
     name: 'BpmProcessInstanceDetail',
     query: {
@@ -45,13 +45,13 @@ const [Grid] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
     cellConfig: {
       height: 64,
     },
-  } as VxeTableGridOptions<BpmTaskApi.TaskManagerVO>,
+  } as VxeTableGridOptions<BpmTaskApi.TaskManager>,
 });
 </script>
 

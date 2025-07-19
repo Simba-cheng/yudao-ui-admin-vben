@@ -185,7 +185,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async ({ page }, formValues) => {
           return await getSpuPage({
-            page: page.currentPage,
+            pageNo: page.currentPage,
             pageSize: page.pageSize,
             tabType: tabType.value,
             ...formValues,
@@ -198,7 +198,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       resizable: true,
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
+      refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<MallSpuApi.Spu>,
