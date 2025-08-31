@@ -30,13 +30,13 @@ export namespace MallSeckillActivityApi {
     /** 备注 */
     remark?: string;
     /** 开始时间 */
-    startTime?: Date;
+    startTime: Date;
     /** 结束时间 */
-    endTime?: Date;
+    endTime: Date;
     /** 排序 */
     sort?: number;
     /** 配置编号 */
-    configIds?: string;
+    configIds?: number[];
     /** 订单数量 */
     orderCount?: number;
     /** 用户数量 */
@@ -55,6 +55,8 @@ export namespace MallSeckillActivityApi {
     seckillPrice?: number;
     /** 秒杀商品列表 */
     products?: SeckillProduct[];
+    /** 图片 */
+    picUrl?: string;
   }
 
   /** 扩展 SKU 配置 */

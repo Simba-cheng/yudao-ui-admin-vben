@@ -23,12 +23,12 @@ defineOptions({ name: 'BpmProcessInstanceTimeline' });
 const props = withDefaults(
   defineProps<{
     activityNodes: BpmProcessInstanceApi.ApprovalNodeInfo[]; // 审批节点信息
+    enableApproveUserSelect?: boolean; // 是否开启审批人自选功能
     showStatusIcon?: boolean; // 是否显示头像右下角状态图标
-    useNextAssignees?: boolean; //  是否用于下一个节点审批人选择
   }>(),
   {
     showStatusIcon: true, // 默认值为 true
-    useNextAssignees: false, // 默认值为 false
+    enableApproveUserSelect: false, // 默认值为 false
   },
 );
 
@@ -43,6 +43,8 @@ const statusIconMap: Record<
   string,
   { animation?: string; color: string; icon: string }
 > = {
+  // 跳过
+  '-2': { color: '#909398', icon: 'mdi:skip-forward-outline' },
   // 审批未开始
   '-1': { color: '#909398', icon: 'mdi:clock-outline' },
   // 待审批
@@ -181,6 +183,9 @@ function handleUserSelectConfirm(userList: any[]) {
 
 /** 跳转子流程 */
 function handleChildProcess(activity: any) {
+  if (!activity.processInstanceId) {
+    return;
+  }
   push({
     name: 'BpmProcessInstanceDetail',
     query: {
@@ -195,12 +200,12 @@ function shouldShowCustomUserSelect(
 ) {
   return (
     isEmpty(activity.tasks) &&
-    isEmpty(activity.candidateUsers) &&
-    (BpmCandidateStrategyEnum.START_USER_SELECT ===
-      activity.candidateStrategy ||
-      (BpmCandidateStrategyEnum.APPROVE_USER_SELECT ===
-        activity.candidateStrategy &&
-        props.useNextAssignees))
+    ((BpmCandidateStrategyEnum.START_USER_SELECT ===
+      activity.candidateStrategy &&
+      isEmpty(activity.candidateUsers)) ||
+      (props.enableApproveUserSelect &&
+        BpmCandidateStrategyEnum.APPROVE_USER_SELECT ===
+          activity.candidateStrategy))
   );
 }
 
@@ -223,6 +228,21 @@ function handleUserSelectClosed() {
 function handleUserSelectCancel() {
   selectedUsers.value = [];
 }
+
+/** 设置自定义审批人 */
+const setCustomApproveUsers = (activityId: string, users: any[]) => {
+  customApproveUsers.value[activityId] = users || [];
+};
+
+/** 批量设置多个节点的自定义审批人 */
+const batchSetCustomApproveUsers = (data: Record<string, any[]>) => {
+  Object.keys(data).forEach((activityId) => {
+    customApproveUsers.value[activityId] = data[activityId] || [];
+  });
+};
+
+// 暴露方法给父组件
+defineExpose({ setCustomApproveUsers, batchSetCustomApproveUsers });
 </script>
 
 <template>
@@ -267,7 +287,12 @@ function handleUserSelectCancel() {
         >
           <!-- 第一行：节点名称、时间 -->
           <div class="flex w-full">
-            <div class="font-bold">{{ activity.name }}</div>
+            <div class="font-bold">
+              {{ activity.name }}
+              <span v-if="activity.status === BpmTaskStatusEnum.SKIP">
+                【跳过】
+              </span>
+            </div>
             <!-- 信息：时间 -->
             <div
               v-if="activity.status !== BpmTaskStatusEnum.NOT_START"
@@ -284,6 +309,7 @@ function handleUserSelectCancel() {
               ghost
               size="small"
               @click="handleChildProcess(activity)"
+              :disabled="!activity.processInstanceId"
             >
               查看子流程
             </Button>

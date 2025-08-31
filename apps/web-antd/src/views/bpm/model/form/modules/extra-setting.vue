@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, provide, ref, watch } from 'vue';
 
 import { CircleHelp } from '@vben/icons';
 
@@ -146,7 +146,7 @@ function handleTaskAfterTriggerEnableChange(val: boolean | number | string) {
     : null;
 }
 
-/** 表单选项 */
+/** 表单字段 */
 const formField = ref<Array<{ field: string; title: string }>>([]);
 const formFieldOptions4Title = computed(() => {
   const cloneFormField = formField.value.map((item) => {
@@ -178,6 +178,9 @@ const formFieldOptions4Summary = computed(() => {
     };
   });
 });
+const unParsedFormFields = ref<string[]>([]); // 未解析的表单字段
+// 暴露给子组件 HttpRequestSetting 使用
+provide('formFields', unParsedFormFields);
 
 /** 兼容以前未配置更多设置的流程 */
 function initData() {
@@ -217,6 +220,9 @@ function initData() {
   if (modelData.value.taskAfterTriggerSetting) {
     taskAfterTriggerEnable.value = true;
   }
+  if (modelData.value.allowWithdrawTask === undefined) {
+    modelData.value.allowWithdrawTask = false;
+  }
 }
 
 /** 监听表单 ID 变化，加载表单数据 */
@@ -227,6 +233,7 @@ watch(
       const data = await FormApi.getFormDetail(newFormId);
       const result: Array<{ field: string; title: string }> = [];
       if (data.fields) {
+        unParsedFormFields.value = data.fields;
         data.fields.forEach((fieldStr: string) => {
           parseFormFields(JSON.parse(fieldStr), result);
         });
@@ -234,6 +241,7 @@ watch(
       formField.value = result;
     } else {
       formField.value = [];
+      unParsedFormFields.value = [];
     }
   },
   { immediate: true },
@@ -263,6 +271,18 @@ defineExpose({ initData, validate });
         <div class="ml-6">
           <TypographyText type="warning">
             第一个审批节点通过后，提交人仍可撤销申请
+          </TypographyText>
+        </div>
+      </div>
+    </FormItem>
+    <FormItem class="mb-5" label="审批人权限">
+      <div class="mt-1 flex flex-col">
+        <Checkbox v-model:checked="modelData.allowWithdrawTask">
+          允许审批人撤回任务
+        </Checkbox>
+        <div class="ml-6">
+          <TypographyText type="secondary">
+            审批人可撤回正在审批节点的前一节点
           </TypographyText>
         </div>
       </div>
